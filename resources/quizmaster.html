@@ -29,6 +29,8 @@
 <script>
 var socket = io();
 var answers = {};
+var usernames = {};
+var scores = {};
 var quizname = "Quiz";
 var quizinstance = "quiz1";
 var qr = new QuizRenderer("#centercol");
@@ -40,8 +42,6 @@ i18n.init({ fallbackLng: 'en' }, function(t) {
 	updateUI();
 	openQuiz();
 });
-
-
 
 function openQuiz() {
 	quizname = prompt(i18n.t("enterquizname"), "Quiz-" + ((Math.random() * 65536)|0));
@@ -96,6 +96,23 @@ function sendQuestion() {
 	updateUI();
 }
 
+function sendScores(recipient) {
+	var responseEnvelope = {
+		response : {
+			"scores" : scores,
+			"usernames" : usernames
+		}
+	};
+
+	if (recipient) {
+		responseEnvelope.recipient = recipient;
+	} else {
+		responseEnvelope.quizinstance = quizinstance;
+	}
+
+	socket.emit("SendScores", responseEnvelope);
+}
+
 
 $("#prev").click(function() {
 	qh.prev();
@@ -117,10 +134,19 @@ $("#reveal").click(function() {
 	};
 
 	socket.emit("RevealCorrect", revealMsg);
+
+	// Update the scores
+	Object.entries(answers).forEach(([key, value]) => {
+		scores[key] += (value.clickedoption == 0);
+	});
+
+	// Send the scores
+	sendScores();
+
+	// Update the quizmaster's view
 	qr.reveal(answers);
 	updateUI();
 });
-
 
 // received an answer from a client
 socket.on("QuizAnswer", function(answer) {
@@ -138,6 +164,15 @@ socket.on("QuizAnswer", function(answer) {
 
 // serve question request for clients that connected late
 socket.on("RequestQuestion", function(request) {
+	// Add user to the usernames and the scores if not happened yet
+	usernames[request.from] = request.username;
+	if(!(request.from in scores)) {
+		// Update the scores
+		scores[request.from] = 0;
+
+		// Broadcast the new users
+		sendScores();
+	}
 
 	if(qr.isRevealed()) {
 		return;		// don't send revealed questions
@@ -157,6 +192,9 @@ socket.on("RequestQuestion", function(request) {
 	socket.emit("QuizQuestion", questionEnvelope);
 });
 
+socket.on("RequestScores", function(request) {
+	sendScores(request.clientid);
+});
 
 socket.on("DiscoveryRequest", function(request) {
 	var response = {

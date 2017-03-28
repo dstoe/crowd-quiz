@@ -20,6 +20,7 @@
 <script src="/shared.js"></script>
 <script>
 var socket = io();
+var username = "";
 var quizinstance = "quiz1";
 var discover = 1;
 var qr = new QuizRenderer("#centercol");
@@ -29,13 +30,14 @@ i18n.init({ fallbackLng: 'en' }, function(t) {
 	$("html").i18n().css("display", "initial");
 });
 
-
 socket.emit("JoinRoom", ["clients"]);
 discoverQuizzes();
 
 
 function requestQuestion() {
 	var request = {
+		"from" : QuizUtil.permaId(),
+		"username" : username,
 		"quizinstance" : quizinstance
 	};
 
@@ -57,6 +59,7 @@ socket.on("DiscoveryResponse", function(response) {
 	li.text(response.quizname);
 	li.toggleClass("quiz", true);
 	li.click(function() {
+		username = prompt(i18n.t("promptusername"), i18n.t("somename"));
 		discover = 0;
 		quizinstance = response.quizinstance;
 		socket.emit("JoinRoom", ["clients." + response.quizinstance]);

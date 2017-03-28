@@ -47,6 +47,10 @@ app.get('/editor', function(req, res){
 	res.sendFile(__dirname + '/resources/editor.html');
 });
 
+app.get('/scores', function(req, res){
+	res.sendFile(__dirname + '/resources/scores.html');
+});
+
 app.get('/jquery.js', function(req, res){
 	res.sendFile(__dirname + '/resources/jquery-1.11.1' + minjs + '.js');
 });
@@ -95,9 +99,25 @@ io.on('connection', function(socket){
 	});
 
 	socket.on("RequestQuestion", function(request) {
-		console.log("question requested, quizinstance " + request.quizinstance);
+		console.log(
+				"question from user " + request.username
+				+ " requested, quizinstance " + request.quizinstance);
 		request.clientid = socket.id;
 		io.in("quizmaster." + request.quizinstance).emit("RequestQuestion", request);
+	});
+
+	socket.on("RequestScores", function(request) {
+		request.clientid = socket.id;
+		io.in("quizmaster." + request.quizinstance).emit("RequestScores", request);
+	});
+
+	socket.on("SendScores", function(responseEnvelope) {
+		var response = responseEnvelope.response;
+		if (responseEnvelope.recipient) {
+			io.in(responseEnvelope.recipient).emit("SendScores", response);
+		} else {
+			io.in("scores." + responseEnvelope.quizinstance).emit("SendScores", response);
+		}
 	});
 
 	// forward answers to quiz master

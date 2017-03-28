@@ -43,7 +43,12 @@ If you want to restrict usage of the quizmaster view only to selected users, it 
 
 ### The participant view
 
-Participants will use the **participant view** to join a quiz currently running and submit answers. The participant view is available, by default, at `http://localhost:3000/`. When entering the participant view, users can select a quiz from a list of currently active quizzes.
+Participants will use the **participant view** to join a quiz currently running and submit answers. On joining a quiz, the participant is prompted for a player name. The participant view is available, by default, at `http://localhost:3000/`. When entering the participant view, users can select a quiz from a list of currently active quizzes.
+
+
+### The scores
+
+The **score view** shows the current score of the different users at `http://localhost:3000/scores`.
 
 ## Internationalization
 

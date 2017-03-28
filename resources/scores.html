@@ -1,0 +1,98 @@
+<!doctype html>
+<html style="display:none">
+<head>
+<meta http-equiv="x-ua-compatible" content="IE=Edge"/> 
+<meta charset="utf-8"/>
+<title>CrowdQuiz Scores</title>
+<link rel="stylesheet" type="text/css" href="styles.css"/>
+</head>
+<body>
+
+<!-- TODO: Right now the stylesheet from the client's view is used here, this
+might not be the desired way to format the score's view. -->
+<div id="centercol">
+	<div id="questiontext" data-i18n="scorescaption"></div>
+
+	<ul id="optionlist"></ul>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/jquery.js"></script>
+<script src="/i18next.js"></script>
+<script src="/shared.js"></script>
+<script>
+var socket = io();
+var quizinstance = "quiz1";
+var discover = 1;
+
+i18n.init({ fallbackLng: 'en' }, function(t) {
+	// apply i18n and show page
+	$("html").i18n().css("display", "initial");
+
+});
+
+socket.emit("JoinRoom", ["scores"]);
+discoverQuizzes();
+
+function discoverQuizzes() {
+	socket.emit("DiscoveryRequest");
+}
+
+// display discovered quizzes
+socket.on("DiscoveryResponse", function(response) {
+	if(!discover) {
+		return;		// ignore discovery messages when not discovering
+	}
+
+	var li = $("<li>");
+	li.text(response.quizname);
+	li.toggleClass("quiz", true);
+	li.click(function() {
+		discover = 0;
+		quizinstance = response.quizinstance;
+		socket.emit("JoinRoom", ["scores." + quizinstance]);
+		socket.emit("RequestScores", {"quizinstance" : quizinstance});
+	});
+
+	$("#optionlist").append(li);
+});
+
+// display the received scores
+socket.on("SendScores", function(data) {
+	// Clear the list
+	$("#optionlist").empty();
+
+	// Sort keys by score
+	sorted_keys = Object.keys(data.usernames).sort(function(lhs, rhs) {
+		if (data.scores[lhs] < data.scores[rhs]) {
+			return 1;
+		} else if (data.scores[lhs] > data.scores[rhs]) {
+			return -1;
+		} else {
+			return 0;
+		}
+	});
+	console.log(sorted_keys);
+
+	// Display the names and their scores	
+	sorted_keys.forEach(function(key) {
+		var count = $("<span>")
+				.toggleClass("optioncount", true)
+				.text(data.scores[key] + "");
+		var li = $("<li>")
+				.toggleClass("option", true)
+				.text(data.usernames[key])
+				.append(count);
+		$("#optionlist").append(li);
+	});
+});
+
+socket.on('ping', function(data){
+	socket.emit('pong', data);
+});    
+
+
+</script>
+
+</body>
+</html>
