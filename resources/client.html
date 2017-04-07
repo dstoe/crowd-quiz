@@ -60,12 +60,14 @@ socket.on("DiscoveryResponse", function(response) {
 	li.toggleClass("quiz", true);
 	li.click(function() {
 		username = prompt(i18n.t("promptusername"), i18n.t("somename"));
-		discover = 0;
-		quizinstance = response.quizinstance;
-		socket.emit("JoinRoom", ["clients." + response.quizinstance]);
-		$("#questiontext").text(i18n.t("waitforquestion"));
-		$("#optionlist").empty();
-		requestQuestion();
+		if (username) {
+			discover = 0;
+			quizinstance = response.quizinstance;
+			socket.emit("JoinRoom", ["clients." + response.quizinstance]);
+			$("#questiontext").text(i18n.t("waitforquestion"));
+			$("#optionlist").empty();
+			requestQuestion();
+		}
 	});
 
 	$("#optionlist").append(li);
