@@ -14,7 +14,7 @@ QuizRenderer = function(topElementSelector) {
 		this.question = question;
 		
 		revealed = false;
-		topElem.empty().append($("<div>").attr("id", "questiontext").text(question.text));
+		topElem.empty().append($("<h1>").attr("id", "questiontext").text(question.text));
 
 		if(question.image) {
 			canvas = $("<canvas>");
